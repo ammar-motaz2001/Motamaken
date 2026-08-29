@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>مُتمكّن — معاينة الشاشات الناقصة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green:#178F4E; --green-2:#2E995C; --green-dark:#0F7A42;
+  --green-tint:#EAF7F0; --green-line:#BFE3CE;
+  --orange:#D24105;
+  --ink:#141414; --ink-2:#5C5C5C; --ink-3:#8E8E8E;
+  --line:#E4E4E4; --zebra:#F6F6F6; --bg:#FFFFFF;
+  --shell:#0E1512; --shell-2:#17211D; --shell-line:#26332D;
+  --r-s:8px; --r-m:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;background:var(--shell);color:#E8EFEB;min-height:100vh}
+
+/* ---------- shell ---------- */
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 26px;border-bottom:1px solid var(--shell-line);flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand b{font-size:17px;font-weight:700}
+.brand span{font-size:12.5px;color:#7E948B}
+.note{font-size:12.5px;color:#7E948B;max-width:520px;line-height:1.7}
+.note em{color:#8FD9B2;font-style:normal;font-weight:600}
+.switch{display:flex;background:var(--shell-2);border:1px solid var(--shell-line);border-radius:9px;padding:3px;gap:3px}
+.switch button{all:unset;cursor:pointer;padding:7px 17px;border-radius:7px;font-size:13px;font-weight:600;color:#8AA097;font-family:inherit}
+.switch button[aria-pressed="true"]{background:var(--green);color:#fff}
+.switch button:focus-visible{outline:2px solid #8FD9B2;outline-offset:2px}
+
+.wrap{display:grid;grid-template-columns:250px 1fr;min-height:calc(100vh - 64px)}
+.side{border-left:1px solid var(--shell-line);padding:18px 13px 40px;overflow:auto}
+.grp{font-size:10.5px;letter-spacing:.1em;color:#5F7A6E;margin:18px 10px 7px;font-weight:700}
+.grp:first-child{margin-top:0}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav button{all:unset;cursor:pointer;padding:9px 11px;border-radius:8px;font-size:13.5px;color:#B7C7C0;display:flex;align-items:center;gap:9px;font-family:inherit}
+.nav button:hover{background:var(--shell-2);color:#fff}
+.nav button[aria-current="true"]{background:var(--green);color:#fff;font-weight:600}
+.nav button:focus-visible{outline:2px solid #8FD9B2;outline-offset:2px}
+.dot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.5;flex:none}
+
+.stage{display:flex;flex-direction:column;align-items:center;padding:28px 20px 60px;gap:14px}
+.caption{text-align:center;max-width:680px}
+.caption h2{font-size:18px;font-weight:700}
+.caption p{font-size:13.5px;color:#8AA097;margin-top:6px;line-height:1.8}
+
+/* ---------- devices ---------- */
+.phone{width:375px;height:812px;background:var(--bg);border-radius:34px;overflow:hidden;position:relative;
+  box-shadow:0 0 0 9px #0A0F0D,0 0 0 10px #2B3833,0 24px 56px rgba(0,0,0,.5);flex:none}
+.laptop{width:100%;max-width:1080px;height:720px;background:var(--bg);border-radius:12px;overflow:hidden;
+  box-shadow:0 0 0 8px #0A0F0D,0 0 0 9px #2B3833,0 24px 56px rgba(0,0,0,.5)}
+.screen{height:100%;overflow-y:auto;color:var(--ink);scrollbar-width:thin;background:#fff}
+.screen::-webkit-scrollbar{width:6px}
+.screen::-webkit-scrollbar-thumb{background:#D6D6D6;border-radius:4px}
+
+/* ---------- mobile chrome ---------- */
+.status{display:flex;justify-content:space-between;padding:12px 20px 4px;font-size:13px;font-weight:600}
+.appbar{display:flex;align-items:center;gap:12px;padding:10px 16px 12px}
+.appbar .back{display:flex;align-items:center;gap:7px;font-size:14.5px;font-weight:600;flex:1}
+.chev{font-size:17px;color:var(--ink-2)}
+.icons{display:flex;align-items:center;gap:11px}
+.ic{width:19px;height:19px;color:var(--ink-2);position:relative;display:grid;place-items:center;font-size:14px}
+.badge{position:absolute;top:-5px;left:-5px;background:var(--orange);color:#fff;font-size:8.5px;font-weight:700;
+  width:13px;height:13px;border-radius:50%;display:grid;place-items:center}
+.grid-btn{width:27px;height:27px;border-radius:7px;background:var(--orange);display:grid;place-items:center;color:#fff;font-size:13px}
+.searchrow{display:flex;gap:9px;padding:0 16px 14px}
+.search{flex:1;border:1px solid var(--line);border-radius:var(--r-s);padding:10px 12px;font-size:12.5px;color:var(--ink-3);
+  display:flex;align-items:center;justify-content:space-between}
+.cta{background:linear-gradient(180deg,var(--green-2),var(--green));color:#fff;border-radius:var(--r-s);
+  padding:10px 15px;font-size:12.5px;font-weight:600;white-space:nowrap;display:grid;place-items:center}
+.tabbar{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;
+  align-items:center;padding:9px 8px 13px}
+.tabbar div{font-size:9.5px;color:var(--ink-3);text-align:center;display:flex;flex-direction:column;gap:3px;align-items:center}
+.tabbar div.on{color:var(--green);font-weight:600}
+.tabbar .plus{width:40px;height:40px;border-radius:50%;background:linear-gradient(180deg,var(--green-2),var(--green));
+  color:#fff;display:grid;place-items:center;font-size:20px;margin-top:-20px;box-shadow:0 5px 14px rgba(23,143,78,.4)}
+
+/* ---------- web chrome ---------- */
+.webhead{border-bottom:1px solid var(--line);padding:14px 30px;display:flex;align-items:center;gap:22px;position:sticky;top:0;background:#fff;z-index:5}
+.logo{font-weight:700;font-size:17px;color:var(--green);white-space:nowrap}
+.logo small{display:block;font-size:9px;color:var(--ink-3);font-weight:400;letter-spacing:2px}
+.webnav{display:flex;gap:20px;font-size:13.5px;color:var(--ink-2);font-weight:500}
+.webnav span.on{color:var(--green);font-weight:600}
+.websearch{flex:1;max-width:320px;border:1px solid var(--line);border-radius:var(--r-s);padding:9px 12px;font-size:12.5px;
+  color:var(--ink-3);display:flex;justify-content:space-between;margin-right:auto}
+.webpage{padding:24px 30px 40px;max-width:1080px}
+.crumb{font-size:12px;color:var(--ink-3);margin-bottom:12px}
+.cols{display:grid;grid-template-columns:1fr 320px;gap:22px;align-items:start}
+.cols-1{display:block}
+.panel{border:1px solid var(--line);border-radius:12px;padding:18px}
+
+/* ---------- shared ui ---------- */
+.page{padding:4px 16px 26px}
+.h1{font-size:19px;font-weight:700}
+.sub{font-size:12.5px;color:var(--ink-2);margin-top:3px}
+.sec{margin-top:18px}
+.sec-t{font-size:14px;font-weight:700;margin-bottom:9px}
+.btn{display:block;width:100%;text-align:center;border-radius:var(--r-s);padding:12px;font-size:13.5px;font-weight:600;cursor:pointer;border:0;font-family:inherit}
+.btn-p{background:linear-gradient(180deg,var(--green-2),var(--green));color:#fff}
+.btn-o{background:#fff;border:1px solid var(--green-line);color:var(--green)}
+.btn-g{background:#fff;border:1px solid var(--line);color:var(--ink-2)}
+.btn+.btn{margin-top:9px}
+.btn:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.row2{display:flex;gap:9px}
+.row2 .btn{margin-top:0}
+.card{border:1px solid var(--line);border-radius:var(--r-m);padding:13px;background:#fff}
+.card+.card{margin-top:10px}
+.flex{display:flex;align-items:center;gap:10px}
+.between{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.av{width:38px;height:38px;border-radius:50%;background:var(--green-tint);color:var(--green);display:grid;place-items:center;
+  font-weight:700;font-size:12px;flex:none;border:1px solid var(--green-line)}
+.av.o{background:#FCEDE7;border-color:#F3CDBD;color:var(--orange)}
+.av.g{background:#F0F0F0;border-color:var(--line);color:var(--ink-2)}
+.nm{font-size:13.5px;font-weight:600;line-height:1.5}
+.mt{font-size:11.5px;color:var(--ink-3);margin-top:2px;line-height:1.7}
+.pill{font-size:10.5px;font-weight:600;padding:4px 10px;border-radius:20px;white-space:nowrap;display:inline-block}
+.p-green{background:var(--green-tint);color:var(--green)}
+.p-orange{background:#FCEDE7;color:var(--orange)}
+.p-grey{background:#F0F0F0;color:var(--ink-2)}
+.p-blue{background:#E8EEFB;color:#28438F}
+.field{margin-bottom:13px}
+.lbl{font-size:12px;font-weight:600;margin-bottom:6px;display:block}
+.inp{width:100%;border:1px solid var(--line);border-radius:var(--r-s);padding:11px 12px;font-size:13px;font-family:inherit;color:var(--ink);background:#fff}
+.inp::placeholder{color:var(--ink-3)}
+.inp:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(23,143,78,.11)}
+textarea.inp{min-height:78px;resize:none}
+.hint{font-size:11px;color:var(--ink-3);margin-top:5px;line-height:1.7}
+.bar{height:6px;background:#EDEDED;border-radius:20px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--green-2),var(--green));border-radius:20px;transition:width .35s ease}
+.ms{border:1px solid var(--line);border-radius:var(--r-m);overflow:hidden}
+.ms+.ms{margin-top:10px}
+.ms-h{display:flex;align-items:center;justify-content:space-between;padding:11px 13px;background:var(--zebra);gap:8px}
+.ms-b{padding:12px 13px}
+.ms-n{width:22px;height:22px;border-radius:50%;background:var(--green);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;flex:none}
+.ms-n.idle{background:#DADADA}
+.chat{padding:14px 16px;display:flex;flex-direction:column;gap:11px}
+.msg{max-width:76%;padding:9px 12px;border-radius:13px;font-size:12.5px;line-height:1.75}
+.msg.them{background:var(--zebra);border-top-right-radius:4px;align-self:flex-start}
+.msg.me{background:var(--green);color:#fff;border-top-left-radius:4px;align-self:flex-end}
+.msg .who{font-size:10.5px;font-weight:700;color:var(--green);margin-bottom:3px}
+.msg .tm{font-size:9.5px;opacity:.65;margin-top:4px;text-align:left}
+.file{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--line);border-radius:9px;padding:9px;max-width:80%;align-self:flex-start}
+.file .ico{width:32px;height:32px;border-radius:7px;background:var(--green-tint);color:var(--green);display:grid;place-items:center;font-size:11px;font-weight:700;flex:none}
+.daysep{text-align:center;font-size:10.5px;color:var(--ink-3)}
+.typing{font-size:11px;color:var(--ink-3)}
+.composer{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 14px;display:flex;gap:9px;align-items:center}
+.composer .inp{border-radius:20px;padding:9px 14px}
+.send{width:38px;height:38px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;flex:none;font-size:15px;transform:scaleX(-1)}
+.tb{width:100%;border-collapse:collapse;font-size:11.5px}
+.tb th{text-align:right;font-weight:700;padding:9px 8px;border-bottom:1px solid var(--line)}
+.tb td{padding:9px 8px;color:var(--ink-2);vertical-align:top;line-height:1.7}
+.tb tr:nth-child(even) td{background:var(--zebra)}
+.empty{text-align:center;padding:34px 14px}
+.empty .ring{width:64px;height:64px;border-radius:50%;background:var(--green-tint);border:1px solid var(--green-line);
+  display:grid;place-items:center;margin:0 auto 14px;font-size:24px;color:var(--green)}
+.empty h3{font-size:15px;font-weight:700}
+.empty p{font-size:12.5px;color:var(--ink-2);margin:6px 0 16px;line-height:1.8}
+.tabs{display:flex;gap:18px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.tab{font-size:13px;font-weight:600;color:var(--ink-3);padding-bottom:9px;cursor:pointer;border-bottom:2px solid transparent}
+.tab.on{color:var(--ink);border-bottom-color:var(--orange)}
+.opt{border:1px solid var(--line);border-radius:var(--r-m);padding:13px;cursor:pointer;display:flex;gap:11px;align-items:flex-start}
+.opt+.opt{margin-top:10px}
+.opt.on{border-color:var(--green);background:var(--green-tint)}
+.rd{width:18px;height:18px;border-radius:50%;border:2px solid #CFCFCF;flex:none;margin-top:2px;display:grid;place-items:center}
+.opt.on .rd{border-color:var(--green)}
+.opt.on .rd::after{content:"";width:9px;height:9px;border-radius:50%;background:var(--green)}
+.divider{height:1px;background:var(--line);margin:15px 0}
+.convlist{border-left:1px solid var(--line);overflow:auto}
+.convrow{padding:13px 15px;border-bottom:1px solid var(--line);cursor:pointer}
+.convrow.on{background:var(--green-tint)}
+.webchat{display:grid;grid-template-columns:300px 1fr;height:100%}
+
+@media (max-width:1000px){
+  .wrap{grid-template-columns:1fr}
+  .side{border-left:0;border-bottom:1px solid var(--shell-line)}
+  .nav{flex-direction:row;flex-wrap:wrap}
+  .cols{grid-template-columns:1fr}
+  .webchat{grid-template-columns:1fr}
+  .convlist{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="brand"><b>مُتمكّن</b><span>معاينة الشاشات الناقصة</span></div>
+  <p class="note">هذه الشاشات لا يوجد لها تصميم في الملفات الحالية. مبنيّة <em>بالكود لا كصور</em> — كل لون وخط ومسافة مقروء من نظام التصميم القائم، فما تضغطه هنا هو ما سيُسلَّم.</p>
+  <div class="switch">
+    <button id="bMobile" aria-pressed="true">موبايل</button>
+    <button id="bWeb" aria-pressed="false">ويب</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <aside class="side">
+    <div class="grp">فرق العمل</div><nav class="nav" id="nav1"></nav>
+    <div class="grp">المحادثات</div><nav class="nav" id="nav2"></nav>
+    <div class="grp">الدفعات الجزئية</div><nav class="nav" id="nav3"></nav>
+    <div class="grp">العقد</div><nav class="nav" id="nav4"></nav>
+  </aside>
+  <main class="stage">
+    <div class="caption"><h2 id="capT"></h2><p id="capD"></p></div>
+    <div id="device"></div>
+  </main>
+</div>
+
+<script>
+/* ================= chrome ================= */
+const mobileChrome = (s) => `
+<div class="screen">
+<div class="status"><span>9:41</span><span>▮▮▮ ᯤ ▰</span></div>
+<div class="appbar">
+  <div class="back"><span class="chev">›</span>${s.crumb}</div>
+  <div class="icons"><span class="ic">☾</span><span class="ic">♡</span>
+  <span class="ic">🔔<span class="badge">1</span></span><span class="grid-btn">⠿</span><span class="ic">☰</span></div>
+</div>
+<div class="searchrow"><div class="search"><span>ابحث</span><span>⌕</span></div>
+<div class="cta">أضف طلبك المجاني</div></div>
+<div class="page"><div class="h1">${s.title}</div><div class="sub">${s.sub}</div>${s.body}</div>
+<div class="tabbar">
+  <div><span>⌂</span>الرئيسية</div><div><span>▦</span>الأقسام</div>
+  <div class="plus">+</div><div><span>⛁</span>طلباتي</div><div class="on"><span>☺</span>حسابي</div>
+</div></div>`;
+
+const webChrome = (s) => `
+<div class="screen">
+<div class="webhead">
+  <div class="logo">MOTAMAKIN<small>مـتـمـكـن</small></div>
+  <div class="webnav"><span>الرئيسية</span><span>المشاريع</span><span>المؤثرون</span><span class="on">حسابي</span></div>
+  <div class="websearch"><span>ابحث</span><span>⌕</span></div>
+  <div class="cta">أضف طلبك المجاني</div>
+  <div class="icons"><span class="ic">♡</span><span class="ic">🔔<span class="badge">1</span></span><div class="av g">HA</div></div>
+</div>
+<div class="webpage">
+  <div class="crumb">${s.crumb} › <span style="color:var(--ink-2)">${s.title}</span></div>
+  <div class="h1" style="font-size:23px">${s.title}</div><div class="sub">${s.sub}</div>
+  <div class="${s.web1?'cols-1':'cols'}" style="margin-top:20px">
+    <div>${s.body}</div>
+    ${s.web1?'':`<aside class="panel">${s.aside||defaultAside}</aside>`}
+  </div>
+</div></div>`;
+
+const defaultAside = `
+<div class="sec-t">ملخص التعاقد</div>
+<div class="between" style="margin-bottom:9px"><span class="mt">المشروع</span><span class="nm" style="font-size:12.5px">لوحة تحكم تفاعلية</span></div>
+<div class="between" style="margin-bottom:9px"><span class="mt">القيمة</span><span class="nm" style="font-size:12.5px">1,200 $</span></div>
+<div class="between" style="margin-bottom:9px"><span class="mt">نمط الدفع</span><span class="nm" style="font-size:12.5px">ثلاث مراحل</span></div>
+<div class="divider"></div>
+<div class="between" style="margin-bottom:7px"><span class="mt">المصروف حتى الآن</span><b style="font-size:12.5px">240 $</b></div>
+<div class="bar"><i style="width:20%"></i></div>
+<div class="hint">الباقي محجوز داخل المنصة ولا يملكه أي طرف حتى اعتماد مرحلته.</div>`;
+
+/* ================= screens ================= */
+const S = {
+teams_empty:{g:1,label:'الفرق — لا يوجد فريق',crumb:'حسابي',title:'فرقي',sub:'كوّن فريقاً لتنفيذ المشاريع الكبيرة',
+ cap:'فرق العمل · الحالة الفارغة',
+ desc:'كل قائمة تحتاج حالة أولى. الشاشة الفارغة دعوة للتصرف، فهي تشرح فائدة الفريق وتعرض الإجراء الوحيد المهم.',
+ web1:true,
+ body:`<div class="empty"><div class="ring">⚇</div>
+  <h3>لا توجد فرق بعد</h3>
+  <p>كوّن فريقاً لتوزيع مشروع كبير على أكثر من منفّذ، ومشاركة الملفات، وإبقاء محادثة واحدة تجمع الجميع.</p>
+  <div style="max-width:300px;margin:0 auto">
+  <button class="btn btn-p">إنشاء فريق</button>
+  <button class="btn btn-o">كيف تعمل الفرق؟</button></div></div>`},
+
+teams_list:{g:1,label:'قائمة الفرق',crumb:'حسابي',title:'فرقي',sub:'فريقان · مشروع واحد جارٍ',
+ cap:'فرق العمل · القائمة',
+ desc:'كل صف يجيب على ثلاثة أسئلة دفعة واحدة: من في الفريق، وما دورك فيه، وهل هو مرتبط بعمل قائم.',
+ body:`<div class="card">
+  <div class="between"><div class="flex"><div class="av">لت</div>
+    <div><div class="nm">فريق لوحات التحكم</div><div class="mt">4 أعضاء · أنت المالك</div></div></div>
+    <span class="pill p-green">نشط</span></div>
+  <div class="divider"></div>
+  <div class="between"><span class="mt">لوحة تحكم تفاعلية — Excel</span><span class="mt">1,200 $</span></div></div>
+ <div class="card">
+  <div class="between"><div class="flex"><div class="av o">هب</div>
+    <div><div class="nm">فريق الهوية البصرية</div><div class="mt">3 أعضاء · عضو</div></div></div>
+    <span class="pill p-grey">خامل</span></div>
+  <div class="divider"></div>
+  <div class="between"><span class="mt">لا يوجد مشروع مرتبط</span><span class="mt">—</span></div></div>
+ <div class="sec"><button class="btn btn-p">إنشاء فريق</button></div>`},
+
+teams_create:{g:1,label:'إنشاء فريق',crumb:'فرقي',title:'إنشاء فريق',sub:'سمِّه، ثم ادعُ من تحتاجهم',
+ cap:'فرق العمل · الإنشاء',
+ desc:'ثلاثة حقول فقط. ما يستطيع المالك تغييره لاحقاً لا مكان له في خطوة الإنشاء.',
+ body:`<div class="field"><label class="lbl">اسم الفريق</label>
+   <input class="inp" value="فريق لوحات التحكم"></div>
+ <div class="field"><label class="lbl">ماذا يعمل هذا الفريق</label>
+   <textarea class="inp">تصميم لوحات البيانات والتقارير.</textarea></div>
+ <div class="field"><label class="lbl">ربطه بمشروع <span style="color:var(--ink-3);font-weight:400">(اختياري)</span></label>
+   <input class="inp" value="لوحة تحكم تفاعلية — Excel">
+   <div class="hint">الأعضاء لن يروا إلا المشروع الذي تربطه هنا، ولا شيء آخر في حسابك.</div></div>
+ <button class="btn btn-p">إنشاء الفريق</button>
+ <button class="btn btn-g">إلغاء</button>`},
+
+teams_members:{g:1,label:'الأعضاء والأدوار',crumb:'فرقي',title:'فريق لوحات التحكم',sub:'4 أعضاء · أنت المالك',
+ cap:'فرق العمل · الأعضاء والأدوار',
+ desc:'الأدوار مسمّاة بما يستطيع الشخص فعله لا بصلاحيته في النظام. وصف المالك لا يحمل زر إزالة، فالواجهة لا تعرض إجراءً سيفشل.',
+ body:`<div class="tabs"><div class="tab on">الأعضاء</div><div class="tab">المشروع</div><div class="tab">الملفات</div></div>
+ <div class="card"><div class="between"><div class="flex"><div class="av">حع</div>
+   <div><div class="nm">حسام عمار</div><div class="mt">hosam@example.com</div></div></div>
+   <span class="pill p-green">المالك</span></div></div>
+ <div class="card"><div class="between"><div class="flex"><div class="av o">مك</div>
+   <div><div class="nm">مريم كمال</div><div class="mt">توزّع المهام وتعتمد التسليمات</div></div></div>
+   <span class="pill p-blue">مدير</span></div></div>
+ <div class="card"><div class="between"><div class="flex"><div class="av g">يص</div>
+   <div><div class="nm">يوسف صلاح</div><div class="mt">ينفّذ ويسلّم ويشارك في المحادثة</div></div></div>
+   <span class="pill p-grey">عضو</span></div></div>
+ <div class="card" style="border-style:dashed"><div class="between"><div class="flex"><div class="av g">؟</div>
+   <div><div class="nm">nour@example.com</div><div class="mt">دُعي قبل يومين · لم يقبل بعد</div></div></div>
+   <span class="pill p-orange">بانتظار القبول</span></div></div>
+ <div class="sec"><button class="btn btn-p">دعوة عضو</button></div>`},
+
+teams_invite:{g:1,label:'دعوة عضو',crumb:'فريق لوحات التحكم',title:'دعوة عضو',sub:'ينضم فور قبوله الدعوة',
+ cap:'فرق العمل · الدعوة',
+ desc:'الدور يُختار لحظة الدعوة، وكل خيار يذكر صراحةً ما الذي سيستطيع هذا الشخص فعله.',
+ body:`<div class="field"><label class="lbl">البريد الإلكتروني أو اسم المستخدم</label>
+   <input class="inp" placeholder="name@example.com"></div>
+ <label class="lbl">الدور داخل الفريق</label>
+ <div class="opt on"><span class="rd"></span><div>
+   <div class="nm">عضو</div><div class="mt">ينفّذ العمل، ويشارك في محادثة الفريق، ويرفع الملفات.</div></div></div>
+ <div class="opt"><span class="rd"></span><div>
+   <div class="nm">مدير</div><div class="mt">كل ما يفعله العضو، إضافةً إلى توزيع المهام واعتماد التسليمات.</div></div></div>
+ <div class="hint" style="margin:12px 0 14px">العضو لا يرى إلا المشروع المرتبط بهذا الفريق. لا يرى محفظتك ولا مشاريعك الأخرى ولا العروض المقدَّمة عليها.</div>
+ <button class="btn btn-p">إرسال الدعوة</button>
+ <button class="btn btn-o">نسخ رابط الدعوة</button>`},
+
+/* ---- chat ---- */
+chat_list:{g:2,label:'قائمة المحادثات',crumb:'حسابي',title:'المحادثات',sub:'ثلاث محادثات · رسالتان غير مقروءتين',
+ cap:'المحادثات · القائمة',
+ desc:'صندوق واحد يجمع المحادثات الفردية والجماعية. اسم المشروع محمول في كل صف، فلا تصل رسالة بلا سياق.',
+ body:`<div class="tabs"><div class="tab on">الكل</div><div class="tab">فردية</div><div class="tab">الفرق</div></div>
+ <div class="card"><div class="between"><div class="flex"><div class="av">لت</div>
+   <div><div class="nm">فريق لوحات التحكم</div><div class="mt">مريم: رفعت النسخة المعدّلة</div></div></div>
+   <div style="text-align:left"><div class="mt">09:41</div><span class="pill p-green">3</span></div></div></div>
+ <div class="card"><div class="between"><div class="flex"><div class="av o">حع</div>
+   <div><div class="nm">حسام عمار</div><div class="mt">هل يمكن تأجيل المرحلة الثانية للأحد؟</div></div></div>
+   <div style="text-align:left"><div class="mt">أمس</div><span class="pill p-green">1</span></div></div></div>
+ <div class="card"><div class="between"><div class="flex"><div class="av g">نف</div>
+   <div><div class="nm">نور فتحي</div><div class="mt">أنت: أرسلت الملفات النهائية</div></div></div>
+   <div class="mt">12 يونيو</div></div></div>`},
+
+chat_direct:{g:2,label:'محادثة فردية',crumb:'المحادثات',title:'حسام عمار',sub:'لوحة تحكم تفاعلية — Excel',
+ cap:'المحادثات · محادثة فردية',
+ desc:'الترويسة تحمل العقد الذي تنتمي إليه المحادثة، فلا ينفصل الحديث عن المال الذي يدور حوله.',
+ chat:true,
+ body:`<div class="chat">
+  <div class="daysep">اليوم</div>
+  <div class="msg them">صباح الخير — خلصت الشيت الأول، جاي يوصلك دلوقتي.<div class="tm">09:12</div></div>
+  <div class="file"><div class="ico">XLS</div><div><div class="nm">dashboard-v2.xlsx</div><div class="mt">2.4 ميجابايت · اضغط للتحميل</div></div></div>
+  <div class="msg me">وصل. صف الإجماليات في التبويب الثاني فيه خطأ.<div class="tm">09:20 ✓✓</div></div>
+  <div class="msg them">معك حق، الفلتر كان مستبعد شهر يونيو. بصلّحه حالاً.<div class="tm">09:24</div></div>
+  <div class="msg me">هل يمكن تأجيل المرحلة الثانية للأحد؟<div class="tm">09:38 ✓✓</div></div>
+  <div class="typing">حسام يكتب…</div></div>
+ <div class="composer"><span class="ic">＋</span><input class="inp" placeholder="اكتب رسالة"><div class="send">➤</div></div>`},
+
+chat_group:{g:2,label:'محادثة جماعية',crumb:'المحادثات',title:'فريق لوحات التحكم',sub:'4 أعضاء · 3 متصلون الآن',
+ cap:'المحادثات · محادثة الفريق',
+ desc:'اسم المُرسِل يظهر في المحادثة الجماعية فقط، حيث يحمل معلومة. والملفات المشتركة تبقى في المحادثة وتُدرج مرة أخرى تحت الفريق فلا يبحث عنها أحد.',
+ chat:true,
+ body:`<div class="chat">
+  <div class="daysep">اليوم</div>
+  <div class="msg them"><div class="who">مريم كمال</div>رفعت النسخة المعدّلة — الجداول المحورية أُعيد بناؤها.<div class="tm">09:05</div></div>
+  <div class="file"><div class="ico">XLS</div><div><div class="nm">revenue-by-region.xlsx</div><div class="mt">مريم · 1.8 ميجابايت</div></div></div>
+  <div class="msg them"><div class="who">يوسف صلاح</div>راجعتها على البيانات الخام، الأرقام مطابقة.<div class="tm">09:19</div></div>
+  <div class="msg me">تمام. هقدّم المرحلة الأولى للاعتماد النهاردة.<div class="tm">09:26 ✓✓</div></div>
+  <div class="msg them"><div class="who">مريم كمال</div>استنى أضيف تنسيق الرسوم الأول.<div class="tm">09:31</div></div></div>
+ <div class="composer"><span class="ic">＋</span><input class="inp" placeholder="اكتب لفريق لوحات التحكم"><div class="send">➤</div></div>`},
+
+/* ---- milestones ---- */
+pay_choose:{g:3,label:'اختيار نمط الدفع',crumb:'العروض',title:'كيف ستدفع؟',sub:'يُختار مرة واحدة ويسري على العقد كله',
+ cap:'الدفعات · اختيار النمط',
+ desc:'الاختيار يتم مرة واحدة عند إنشاء العقد، وكل خيار موصوف بما يحدث للمال لا باسمه في النظام.',
+ body:`<div class="opt"><span class="rd"></span><div>
+   <div class="nm">دفعة واحدة</div>
+   <div class="mt">يُحجز المبلغ كاملاً (1,200 $) الآن، ويُصرف للمنفّذ بعد اعتمادك للعمل المكتمل.</div></div></div>
+ <div class="opt on"><span class="rd"></span><div>
+   <div class="nm">تقسيم على مراحل</div>
+   <div class="mt">قسّم العمل إلى مراحل. كل مرحلة تُحجز وتُصرف على حدة فور اعتمادك لها، دون انتظار باقي المراحل.</div></div></div>
+ <div class="hint" style="margin:12px 0 14px">في الحالتين يبقى المال محجوزاً لدى المنصة. لا يستطيع أي طرف سحبه قبل اعتماد المرحلة التي يخصّها.</div>
+ <button class="btn btn-p">متابعة</button>`},
+
+ms_define:{g:3,label:'تعريف المراحل',crumb:'نمط الدفع',title:'تقسيم على مراحل',sub:'إجمالي العقد 1,200 $',
+ cap:'الدفعات · تعريف المراحل',
+ desc:'مجموع النسب يجب أن يساوي 100٪ بالضبط. وبدل أن يفشل عند الإرسال، يُحسب المجموع لحظياً ويبقى الزر مقفلاً حتى يتوازن. غيّر أي نسبة في الحقول وراقب النتيجة.',
+ body:`<div id="msform">
+ <div class="ms"><div class="ms-h"><div class="flex"><span class="ms-n">1</span><b style="font-size:13px">المرحلة الأولى</b></div>
+   <span class="mt msamt">240 $</span></div>
+   <div class="ms-b"><div class="field"><label class="lbl">ما الذي يُسلَّم فيها</label>
+     <input class="inp" value="نموذج البيانات والملفات المصدرية بعد التنظيف"></div>
+   <div class="row2"><div class="field" style="flex:1;margin:0"><label class="lbl">النسبة ٪</label>
+     <input class="inp pct" type="number" value="20" min="1" max="100"></div>
+     <div class="field" style="flex:1;margin:0"><label class="lbl">مدة التسليم</label><input class="inp" value="5 أيام"></div></div></div></div>
+
+ <div class="ms"><div class="ms-h"><div class="flex"><span class="ms-n">2</span><b style="font-size:13px">المرحلة الثانية</b></div>
+   <span class="mt msamt">480 $</span></div>
+   <div class="ms-b"><div class="field"><label class="lbl">ما الذي يُسلَّم فيها</label>
+     <input class="inp" value="هيكل اللوحة والرسوم البيانية الأساسية"></div>
+   <div class="row2"><div class="field" style="flex:1;margin:0"><label class="lbl">النسبة ٪</label>
+     <input class="inp pct" type="number" value="40" min="1" max="100"></div>
+     <div class="field" style="flex:1;margin:0"><label class="lbl">مدة التسليم</label><input class="inp" value="10 أيام"></div></div></div></div>
+
+ <div class="ms"><div class="ms-h"><div class="flex"><span class="ms-n">3</span><b style="font-size:13px">المرحلة الثالثة</b></div>
+   <span class="mt msamt">480 $</span></div>
+   <div class="ms-b"><div class="field"><label class="lbl">ما الذي يُسلَّم فيها</label>
+     <input class="inp" value="التفاعلية والاختبار والتسليم النهائي"></div>
+   <div class="row2"><div class="field" style="flex:1;margin:0"><label class="lbl">النسبة ٪</label>
+     <input class="inp pct" type="number" value="40" min="1" max="100"></div>
+     <div class="field" style="flex:1;margin:0"><label class="lbl">مدة التسليم</label><input class="inp" value="7 أيام"></div></div></div></div>
+
+ <button class="btn btn-o" style="margin-top:10px">＋ إضافة مرحلة</button>
+ <div class="sec">
+   <div class="between" style="margin-bottom:7px"><b style="font-size:13px">إجمالي الموزَّع</b><b style="font-size:13px" id="tot">100٪</b></div>
+   <div class="bar"><i id="totbar" style="width:100%"></i></div>
+   <div class="hint" id="tothint">متوازن. يمكنك إرسال هذا التقسيم للمنفّذ.</div></div>
+ <button class="btn btn-p" id="msSend">إرسال التقسيم للاتفاق</button></div>`},
+
+ms_track:{g:3,label:'متابعة المراحل',crumb:'العقود',title:'لوحة تحكم تفاعلية',sub:'ثلاث مراحل · 1,200 $ · حسام عمار',
+ cap:'الدفعات · متابعة المراحل',
+ desc:'صف لكل مرحلة بحالتها المستقلة. والمرحلة المصروفة تُغلق وتبقى مغلقة حتى لو دخلت مرحلة تالية في نزاع.',
+ body:`<div class="sec">
+   <div class="between" style="margin-bottom:7px"><span class="mt">المصروف حتى الآن</span><b style="font-size:13px">240 $ من 1,200 $</b></div>
+   <div class="bar"><i style="width:20%"></i></div></div>
+ <div class="sec">
+ <div class="ms"><div class="ms-h"><div class="flex"><span class="ms-n">1</span>
+   <div><div class="nm">نموذج البيانات والملفات المنظَّفة</div><div class="mt">20٪ · 240 $</div></div></div>
+   <span class="pill p-green">مصروفة</span></div>
+   <div class="ms-b"><div class="mt">اعتُمدت 12 يونيو · صُرفت للمنفّذ بعد خصم عمولة المنصة 8٪</div></div></div>
+
+ <div class="ms"><div class="ms-h"><div class="flex"><span class="ms-n">2</span>
+   <div><div class="nm">هيكل اللوحة والرسوم الأساسية</div><div class="mt">40٪ · 480 $</div></div></div>
+   <span class="pill p-orange">بانتظار اعتمادك</span></div>
+   <div class="ms-b"><div class="mt" style="margin-bottom:11px">سُلّمت قبل يومين · 3 ملفات مرفقة</div>
+   <div class="row2"><button class="btn btn-p" style="flex:1">مراجعة التسليم</button>
+   <button class="btn btn-g" style="flex:1">طلب تعديل</button></div>
+   <div class="hint">تُعتمد تلقائياً بعد 3 أيام إن لم ترد.</div></div></div>
+
+ <div class="ms"><div class="ms-h"><div class="flex"><span class="ms-n idle">3</span>
+   <div><div class="nm">التفاعلية والاختبار والتسليم</div><div class="mt">40٪ · 480 $</div></div></div>
+   <span class="pill p-grey">لم تبدأ</span></div>
+   <div class="ms-b"><div class="mt">محجوزة. تبدأ فور اعتماد المرحلة الثانية.</div></div></div></div>`},
+
+ms_review:{g:3,label:'مراجعة تسليم مرحلة',crumb:'المراحل',title:'تسليم المرحلة الثانية',sub:'هيكل اللوحة والرسوم الأساسية',
+ cap:'الدفعات · المراجعة والصرف',
+ desc:'أثر الزر مذكور فوقه. الاعتماد يحرّك مالاً حقيقياً، فالشاشة تقول كم سيُصرف ولمن قبل الضغط لا بعده.',
+ body:`<div class="sec"><div class="sec-t">ملاحظة من حسام</div>
+ <div class="card"><div class="mt" style="color:var(--ink)">الرسوم الستة كلها جاهزة، والفلاتر مربوطة بنطاق التاريخ. التوزيع حسب المنطقة في التبويب الثالث كما اتفقنا.</div></div></div>
+ <div class="sec"><div class="sec-t">الملفات المرفقة</div>
+ <div class="file" style="max-width:100%"><div class="ico">XLS</div><div><div class="nm">dashboard-v2.xlsx</div><div class="mt">2.4 ميجابايت</div></div></div>
+ <div class="file" style="max-width:100%;margin-top:9px"><div class="ico">PDF</div><div><div class="nm">chart-spec.pdf</div><div class="mt">640 كيلوبايت</div></div></div>
+ <div class="file" style="max-width:100%;margin-top:9px"><div class="ico">PNG</div><div><div class="nm">preview.png</div><div class="mt">1.1 ميجابايت</div></div></div></div>
+ <div class="divider"></div>
+ <div class="card" style="background:var(--green-tint);border-color:var(--green-line)">
+   <div class="between"><span class="nm">الاعتماد سيصرف</span><b style="color:var(--green)">441.60 $</b></div>
+   <div class="mt">480 $ قيمة المرحلة − 8٪ عمولة المنصة. تُصرف لحسام عمار فوراً، ولا يمكن التراجع عنها.</div></div>
+ <div class="sec">
+   <button class="btn btn-p">اعتماد وصرف المبلغ</button>
+   <button class="btn btn-o">طلب تعديل</button>
+   <button class="btn btn-g">فتح نزاع</button></div>`},
+
+contract:{g:4,label:'سجل العقد',crumb:'العقود',title:'العقد رقم MTK-4821',sub:'اتُّفق عليه 10 يونيو 2024 · قبله الطرفان',
+ cap:'العقد · السجل المتفق عليه',
+ desc:'المرجع المكتوب الذي يحتكم إليه الطرفان عند الخلاف. يُولَّد مما اتُّفق عليه فعلاً لا يكتبه أحدهما، وهو أول ما تقرؤه الإدارة عند النزاع.',
+ body:`<div class="card">
+   <div class="between"><div class="flex"><div class="av o">حع</div><div><div class="nm">حسام عمار</div><div class="mt">المنفّذ</div></div></div>
+     <span class="pill p-green">قَبِل</span></div>
+   <div class="divider"></div>
+   <div class="between"><div class="flex"><div class="av">سع</div><div><div class="nm">سارة عادل</div><div class="mt">صاحبة المشروع</div></div></div>
+     <span class="pill p-green">قَبِلت</span></div></div>
+ <div class="sec"><div class="sec-t">بنود الاتفاق</div>
+ <table class="tb">
+  <tr><td style="width:40%;color:var(--ink);font-weight:600">نطاق العمل</td><td>لوحة تحكم تفاعلية — Excel</td></tr>
+  <tr><td style="color:var(--ink);font-weight:600">القيمة الإجمالية</td><td>1,200 $</td></tr>
+  <tr><td style="color:var(--ink);font-weight:600">نمط الدفع</td><td>ثلاث مراحل — 20٪ / 40٪ / 40٪</td></tr>
+  <tr><td style="color:var(--ink);font-weight:600">مدة التسليم</td><td>22 يوماً من تاريخ البدء</td></tr>
+  <tr><td style="color:var(--ink);font-weight:600">عمولة المنصة</td><td>8٪ تُخصم عند صرف كل مرحلة</td></tr>
+  <tr><td style="color:var(--ink);font-weight:600">الاعتماد التلقائي</td><td>بعد 3 أيام من التسليم إن لم يرد صاحب المشروع</td></tr>
+  <tr><td style="color:var(--ink);font-weight:600">مهلة فتح النزاع</td><td>7 أيام من التسليم النهائي</td></tr>
+ </table></div>
+ <div class="sec"><div class="sec-t">سجل الأحداث</div>
+ <table class="tb">
+  <tr><td style="width:32%">10 يونيو 09:12</td><td>قدّم حسام عمار عرضه</td></tr>
+  <tr><td>10 يونيو 14:40</td><td>طلبت سارة عادل تعديلاً على العرض</td></tr>
+  <tr><td>10 يونيو 16:02</td><td>قُبل العرض المعدَّل — أُنشئ العقد</td></tr>
+  <tr><td>10 يونيو 16:05</td><td>مُوّلت المرحلة الأولى — حُجز 240 $</td></tr>
+  <tr><td>12 يونيو 11:30</td><td>اعتُمدت المرحلة الأولى — صُرف 220.80 $</td></tr>
+ </table></div>
+ <div class="sec"><button class="btn btn-o">تحميل نسخة PDF</button>
+ <button class="btn btn-g">فتح نزاع</button></div>`},
+};
+
+/* ================= render ================= */
+let view='mobile', current='teams_empty';
+
+Object.keys(S).forEach(k=>{
+  const b=document.createElement('button');
+  b.innerHTML=`<span class="dot"></span>${S[k].label}`;
+  b.dataset.k=k; b.onclick=()=>show(k);
+  document.getElementById('nav'+S[k].g).appendChild(b);
+});
+
+function webChatLayout(s){
+  return `<div class="screen"><div class="webhead">
+    <div class="logo">MOTAMAKIN<small>مـتـمـكـن</small></div>
+    <div class="webnav"><span>الرئيسية</span><span>المشاريع</span><span>المؤثرون</span><span class="on">حسابي</span></div>
+    <div class="websearch"><span>ابحث</span><span>⌕</span></div>
+    <div class="cta">أضف طلبك المجاني</div></div>
+  <div class="webchat" style="height:calc(100% - 62px)">
+    <div class="convlist">
+      <div class="convrow ${s===S.chat_group?'on':''}"><div class="flex"><div class="av">لت</div>
+        <div><div class="nm">فريق لوحات التحكم</div><div class="mt">مريم: رفعت النسخة المعدّلة</div></div></div></div>
+      <div class="convrow ${s===S.chat_direct?'on':''}"><div class="flex"><div class="av o">حع</div>
+        <div><div class="nm">حسام عمار</div><div class="mt">هل يمكن تأجيل المرحلة الثانية؟</div></div></div></div>
+      <div class="convrow"><div class="flex"><div class="av g">نف</div>
+        <div><div class="nm">نور فتحي</div><div class="mt">أنت: أرسلت الملفات النهائية</div></div></div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;overflow:hidden">
+      <div style="padding:13px 20px;border-bottom:1px solid var(--line)">
+        <div class="nm">${s.title}</div><div class="mt">${s.sub}</div></div>
+      <div style="flex:1;overflow:auto">${s.body}</div>
+    </div></div></div>`;
+}
+
+function show(k){
+  current=k; const s=S[k];
+  const host=document.getElementById('device');
+  if(view==='mobile'){
+    host.className='phone'; host.innerHTML=mobileChrome(s);
+  } else {
+    host.className='laptop';
+    host.innerHTML = s.chat ? webChatLayout(s) : webChrome(s);
+  }
+  document.getElementById('capT').textContent=s.cap;
+  document.getElementById('capD').textContent=s.desc;
+  document.querySelectorAll('.nav button').forEach(b=>
+    b.setAttribute('aria-current', b.dataset.k===k?'true':'false'));
+  wire();
+}
+
+document.getElementById('bMobile').onclick=()=>setView('mobile');
+document.getElementById('bWeb').onclick=()=>setView('web');
+function setView(v){
+  view=v;
+  document.getElementById('bMobile').setAttribute('aria-pressed',v==='mobile');
+  document.getElementById('bWeb').setAttribute('aria-pressed',v==='web');
+  show(current);
+}
+
+function wire(){
+  document.querySelectorAll('.opt').forEach(o=>o.onclick=()=>{
+    o.parentNode.querySelectorAll('.opt').forEach(x=>x.classList.remove('on'));
+    o.classList.add('on');});
+  document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+    t.parentNode.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+    t.classList.add('on');});
+  const pcts=document.querySelectorAll('.pct');
+  if(!pcts.length) return;
+  const recalc=()=>{
+    let total=0; pcts.forEach(p=>total+=Number(p.value)||0);
+    const amts=document.querySelectorAll('.msamt');
+    pcts.forEach((p,i)=>{if(amts[i]) amts[i].textContent=Math.round(1200*(Number(p.value)||0)/100)+' $';});
+    const tot=document.getElementById('tot'),bar=document.getElementById('totbar'),
+          hint=document.getElementById('tothint'),btn=document.getElementById('msSend');
+    tot.textContent=total+'٪'; bar.style.width=Math.min(total,100)+'%';
+    const ok=total===100;
+    tot.style.color=ok?'var(--green)':'var(--orange)';
+    bar.style.background=ok?'':'var(--orange)';
+    hint.textContent = ok?'متوازن. يمكنك إرسال هذا التقسيم للمنفّذ.'
+      : total<100 ? 'باقي '+(100-total)+'٪ من قيمة العقد غير موزّعة.'
+                  : 'تجاوزت بمقدار '+(total-100)+'٪. قلّل نسبة إحدى المراحل قبل الإرسال.';
+    btn.style.opacity=ok?'1':'.45'; btn.style.pointerEvents=ok?'auto':'none';
+  };
+  pcts.forEach(p=>p.addEventListener('input',recalc)); recalc();
+}
+
+show('teams_empty');
+</script>
+</body>
+</html>
